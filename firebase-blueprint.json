@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with game stats and inventory",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "currency": { "type": "integer", "description": "In-game currency" },
+        "xp": { "type": "integer" },
+        "rank": { "type": "string", "enum": ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Legendary"] },
+        "rankPoints": { "type": "integer" },
+        "inventory": {
+          "type": "object",
+          "properties": {
+            "cars": { "type": "array" },
+            "guns": { "type": "array" },
+            "paints": { "type": "array" },
+            "decals": { "type": "array" },
+            "upgrades": { "type": "object" }
+          }
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "totalWins": { "type": "integer" },
+            "totalKills": { "type": "integer" },
+            "matchesPlayed": { "type": "integer" },
+            "highestScore": { "type": "integer" }
+          }
+        },
+        "achievements": { "type": "array" },
+        "dailyChallengeStatus": { "type": "object" },
+        "lastMatchId": { "type": "string" }
+      },
+      "required": ["uid", "displayName"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Recorded match data for history and spectator mode",
+      "type": "object",
+      "properties": {
+        "matchId": { "type": "string" },
+        "players": { "type": "array" },
+        "winner": { "type": "string" },
+        "duration": { "type": "number" },
+        "map": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "replayData": { "type": "string", "description": "JSON string of match events for playback" }
+      }
+    },
+    "LeaderboardEntry": {
+      "title": "Leaderboard Entry",
+      "description": "Entry for the global leaderboard",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "score": { "type": "integer" },
+        "rank": { "type": "string" }
+      }
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Active multiplayer room session data",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "activePlayers": { "type": "object" },
+        "gameStatus": { "type": "string", "enum": ["waiting", "starting", "playing", "finished"] }
+      }
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "Player feedback and bug reports",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "message": { "type": "string" },
+        "rating": { "type": "integer" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "message", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Historical matches"
+    },
+    "/leaderboards/global/entries/{userId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Global leaderboard rankings"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Active multiplayer rooms"
+    },
+    "/feedback/{feedbackId}": {
+      "schema": "Feedback",
+      "description": "Player submitted feedback"
+    }
+  }
+}
