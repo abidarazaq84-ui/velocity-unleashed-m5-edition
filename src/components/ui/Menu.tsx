@@ -118,13 +118,13 @@ export const Menu = () => {
         <div className="grid grid-cols-2 gap-4">
            {[
              { icon: Play, label: 'QUICK START', action: () => setGameState('playing'), primary: true },
-             { icon: Swords, label: 'RANK MODE', action: () => setGameState('playing') },
-             { icon: Calendar, label: 'CHALLENGES', action: () => setActiveTab('challenges') },
-             { icon: Star, label: 'EVENTS', action: () => setActiveTab('challenges') },
+             { icon: Swords, label: 'CREATE MATCH', action: () => { alert('Matchmaking Server Created! Waiting for players...'); setGameState('playing'); }, primary: true },
+             { icon: UserIcon, label: 'JOIN MATCH', action: () => { alert('Searching for available matches...'); setTimeout(() => setGameState('playing'), 2000); } },
              { icon: Trophy, label: 'ELITE LIST', action: () => setActiveTab('leaderboard') },
              { icon: ShoppingCart, label: 'BLACK MARKET', action: () => setActiveTab('shop') },
              { icon: Settings, label: 'GARAGE', action: () => setGameState('garage') },
              { icon: MessageSquare, label: 'FEEDBACK', action: () => setActiveTab('feedback') },
+             { icon: Star, label: 'EVENTS', action: () => setActiveTab('challenges') },
            ].map((item, i) => (
              <motion.button
                key={item.label}
