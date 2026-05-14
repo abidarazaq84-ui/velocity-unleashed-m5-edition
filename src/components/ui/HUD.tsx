@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Shield, Zap, Target, AlertTriangle, X, Swords, Shirt } from 'lucide-react';
 import { useGame } from '../../contexts/GameContext';
+import { InGameChat } from './InGameChat';
 
 export const HUD = ({ speed = 0, health = 100, boost = 100, wantedLevel = 0, policeTimer = 0 }) => {
   const { setGameState, gameMode, telemetry, isPlayerInCar, profile } = useGame();
@@ -195,8 +196,9 @@ export const HUD = ({ speed = 0, health = 100, boost = 100, wantedLevel = 0, pol
 
       {/* Bottom Bar: Speed & Weapons */}
       <div className="flex justify-between items-end">
-        {/* Left: Speedometer */}
+        {/* Left: Speedometer & Chat */}
         <div className="space-y-4">
+          <InGameChat />
           {isPlayerInCar && (
             <div className="relative w-56 h-36 flex flex-col items-center justify-end bg-black/60 rounded-t-[40px] border border-white/20 border-b-0 backdrop-blur-md shadow-[0_-10px_30px_rgba(34,211,238,0.1)]">
               <div className="absolute inset-0 pt-6 px-6">

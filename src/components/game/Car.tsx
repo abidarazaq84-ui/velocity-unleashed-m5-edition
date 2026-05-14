@@ -22,28 +22,32 @@ const CAR_CONFIG = {
 
 const DamagePart = ({ args, position, rotation, color, damage = 0 }: any) => {
   // Simulates denting/deformation based on damage level
-  const dent = useMemo(() => ({
-    x: (Math.random() - 0.5) * damage * 0.2,
-    y: (Math.random() - 0.5) * damage * 0.1,
-    z: (Math.random() - 0.5) * damage * 0.2,
-    rx: (Math.random() - 0.5) * damage * 0.3,
-  }), [damage > 0.5]); // Only recalculate on significant damage
-
   return (
     <mesh 
-      position={[position[0] + dent.x, position[1] + dent.y, position[2] + dent.z]} 
-      rotation={[rotation[0] + dent.rx, rotation[1], rotation[2]]}
+      position={[
+        position[0], 
+        position[1] - damage * 0.15, 
+        position[2] - (position[2] > 0 ? damage * 0.2 : -damage * 0.2)
+      ]} 
+      rotation={[
+        rotation[0] + (position[2] > 0 ? damage * 0.3 : -damage * 0.3), 
+        rotation[1] + (Math.random() * 0.01), // Tiny random to avoid pure symmetry artifacts over time, but stable since damage changes rarely
+        rotation[2] + (position[0] > 0 ? damage * 0.2 : -damage * 0.2)
+      ]}
+      scale={[
+        1 - damage * 0.1, 
+        1 - damage * 0.3, 
+        1 - damage * 0.1
+      ]}
       castShadow
     >
       <boxGeometry args={args} />
       <meshPhysicalMaterial 
         color={color} 
-        metalness={0.6} 
-        roughness={0.2}
-        clearcoat={1.0}
-        clearcoatRoughness={0.1}
-        emissive={damage > 0.8 ? "red" : "black"}
-        emissiveIntensity={damage * 0.5}
+        metalness={0.6 - damage * 0.4} 
+        roughness={0.2 + damage * 0.7}
+        clearcoat={Math.max(0, 1.0 - damage * 2)}
+        clearcoatRoughness={0.1 + damage * 0.8}
       />
     </mesh>
   );
@@ -76,9 +80,16 @@ export const Car = ({ position = [0, 5, 0], rotation = [0, 0, 0], chassisRef }: 
           crashSfx.current.setVolume(Math.min(1, impact / 20));
           crashSfx.current.play();
         }
+        
+        // Compute damage zone based on relative impact direction
+        const relV = new THREE.Vector3(...velocity.current);
+        const localVelocity = relV.applyQuaternion(chassisBody.current!.quaternion.clone().invert());
+        const hitFront = localVelocity.z > 0;
+        
         setDamageZones(dz => ({
            ...dz,
-           front: Math.min(1, dz.front + impact / 50)
+           front: hitFront ? Math.min(1, dz.front + impact / 30) : dz.front,
+           back: !hitFront ? Math.min(1, dz.back + impact / 30) : dz.back,
         }));
       }
     }
@@ -125,6 +136,8 @@ export const Car = ({ position = [0, 5, 0], rotation = [0, 0, 0], chassisRef }: 
     wheels,
   }), useRef<THREE.Group>(null));
 
+  const nitroLeftRef = useRef<THREE.Mesh>(null);
+  const nitroRightRef = useRef<THREE.Mesh>(null);
   const smokeRef = useRef<THREE.Points>(null);
 
   useFrame((state) => {
@@ -213,6 +226,21 @@ export const Car = ({ position = [0, 5, 0], rotation = [0, 0, 0], chassisRef }: 
       smokeRef.current.geometry.attributes.position.needsUpdate = true;
     }
 
+    // Nitro Visual Effects
+    const isBoosting = boost && boostLevel.current > 5 && forward && speedFactor > 1;
+    [nitroLeftRef.current, nitroRightRef.current].forEach(nitro => {
+      if (nitro) {
+        if (isBoosting) {
+          nitro.visible = true;
+          // Flickering scale for flame effect
+          const scaleZ = 1 + Math.random() * 0.8;
+          nitro.scale.set(1, scaleZ, 1);
+        } else {
+          nitro.visible = false;
+        }
+      }
+    });
+
     // Indicator blinking
     setIndicatorsOn(Math.floor(state.clock.getElapsedTime() * 4) % 2 === 0);
 
@@ -255,9 +283,14 @@ export const Car = ({ position = [0, 5, 0], rotation = [0, 0, 0], chassisRef }: 
     <group ref={vehicle}>
       <group ref={chassisBody}>
         {/* Detailed Modular Body */}
-        <DamagePart args={[1.2, 0.4, 1.2]} position={[0, 0, 0.8]} rotation={[0, 0, 0]} color="#b22222" damage={damageZones.front} />
-        <DamagePart args={[1.2, 0.5, 1.5]} position={[0, 0.1, -0.6]} rotation={[0, 0, 0]} color="#b22222" damage={0} />
-        <DamagePart args={[1, 0.35, 1.2]} position={[0, 0.45, -0.2]} rotation={[0.1, 0, 0]} color="#0a0a0a" damage={0} />
+        <DamagePart args={[1.2, 0.4, 1.2]} position={[0, 0, 0.8]} rotation={[0, 0, 0]} color="#b22222" damage={Math.min(1, damageZones.front * 1.5)} />
+        <DamagePart args={[1.2, 0.5, 1.5]} position={[0, 0.1, -0.6]} rotation={[0, 0, 0]} color="#b22222" damage={Math.min(1, damageZones.back * 1.5)} />
+        <DamagePart args={[1, 0.35, 1.2]} position={[0, 0.45, -0.2]} rotation={[0.1, 0, 0]} color="#0a0a0a" damage={Math.min(1, (damageZones.front + damageZones.back) * 0.5)} />
+        
+        {/* Front Bumper */}
+        <DamagePart args={[1.25, 0.2, 0.3]} position={[0, -0.1, 1.4]} rotation={[0, 0, 0]} color="#111111" damage={Math.min(1, damageZones.front * 2)} />
+        {/* Rear Bumper */}
+        <DamagePart args={[1.25, 0.2, 0.3]} position={[0, -0.1, -1.4]} rotation={[0, 0, 0]} color="#111111" damage={Math.min(1, damageZones.back * 2)} />
         
         {/* Lights */}
         <mesh position={[-0.4, 0.1, 1.45]}>
@@ -322,6 +355,28 @@ export const Car = ({ position = [0, 5, 0], rotation = [0, 0, 0], chassisRef }: 
             emissiveIntensity={signalRight && indicatorsOn ? 5 : 0} 
           />
         </mesh>
+
+        {/* Exhausts & Nitro */}
+        <group position={[-0.4, -0.1, -1.45]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.08, 0.08, 0.2]} />
+            <meshStandardMaterial color="#111" metalness={0.8} />
+          </mesh>
+          <mesh ref={nitroLeftRef} position={[0, -0.3, 0]} rotation={[Math.PI, 0, 0]} visible={false}>
+            <coneGeometry args={[0.15, 0.8, 8]} />
+            <meshBasicMaterial color="#00ffff" transparent opacity={0.8} blending={THREE.AdditiveBlending} />
+          </mesh>
+        </group>
+        <group position={[0.4, -0.1, -1.45]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.08, 0.08, 0.2]} />
+            <meshStandardMaterial color="#111" metalness={0.8} />
+          </mesh>
+          <mesh ref={nitroRightRef} position={[0, -0.3, 0]} rotation={[Math.PI, 0, 0]} visible={false}>
+             <coneGeometry args={[0.15, 0.8, 8]} />
+             <meshBasicMaterial color="#00ffff" transparent opacity={0.8} blending={THREE.AdditiveBlending} />
+          </mesh>
+        </group>
 
         {/* Gun */}
         <mesh position={[0, 0.65, 0.2]}>

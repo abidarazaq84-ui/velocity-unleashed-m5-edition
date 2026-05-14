@@ -115,16 +115,31 @@ export const Menu = () => {
            </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4">
+           {/* Primary Actions */}
+           <motion.button
+             onClick={() => { alert('Matchmaking Server Created! Waiting for players...'); setGameState('playing'); }}
+             className="w-full bg-red-600 hover:bg-red-500 text-white font-black italic tracking-tighter text-2xl py-6 rounded-2xl shadow-xl shadow-red-600/20 transition-all flex items-center justify-center gap-3 border border-red-500/50"
+           >
+             <Swords size={28} />
+             CREATE MATCH
+           </motion.button>
+           
+           <motion.button
+             onClick={() => { alert('Searching for available matches...'); setTimeout(() => setGameState('playing'), 2000); }}
+             className="w-full bg-white text-black hover:bg-zinc-200 font-black italic tracking-tighter text-2xl py-6 rounded-2xl shadow-xl shadow-white/10 transition-all flex items-center justify-center gap-3"
+           >
+             <Play size={28} />
+             QUICK JOIN
+           </motion.button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mt-6">
            {[
-             { icon: Play, label: 'QUICK START', action: () => setGameState('playing'), primary: true },
-             { icon: Swords, label: 'CREATE MATCH', action: () => { alert('Matchmaking Server Created! Waiting for players...'); setGameState('playing'); }, primary: true },
-             { icon: UserIcon, label: 'JOIN MATCH', action: () => { alert('Searching for available matches...'); setTimeout(() => setGameState('playing'), 2000); } },
              { icon: Trophy, label: 'ELITE LIST', action: () => setActiveTab('leaderboard') },
              { icon: ShoppingCart, label: 'BLACK MARKET', action: () => setActiveTab('shop') },
              { icon: Settings, label: 'GARAGE', action: () => setGameState('garage') },
-             { icon: MessageSquare, label: 'FEEDBACK', action: () => setActiveTab('feedback') },
-             { icon: Star, label: 'EVENTS', action: () => setActiveTab('challenges') },
+             { icon: MessageSquare, label: 'FEEDBACK', action: () => setActiveTab('feedback') }
            ].map((item, i) => (
              <motion.button
                key={item.label}
@@ -132,9 +147,7 @@ export const Menu = () => {
                animate={{ y: 0, opacity: 1 }}
                transition={{ delay: i * 0.05 }}
                onClick={item.action}
-               className={`p-4 rounded-2xl flex flex-col items-center justify-center gap-2 font-bold transition-all border border-white/5 aspect-square lg:aspect-auto h-28 ${
-                 item.primary ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/20' : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white'
-               }`}
+               className={`p-4 rounded-2xl flex flex-col items-center justify-center gap-2 font-bold transition-all border border-white/5 aspect-square lg:aspect-auto h-28 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white`}
              >
                <item.icon size={24} />
                <span className="text-[10px] tracking-widest">{item.label}</span>
